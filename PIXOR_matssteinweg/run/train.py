@@ -1,6 +1,6 @@
 import torch.optim as optim
-from load_data import *
-from PIXOR import PIXOR
+from PIXOR_matssteinweg.data_processing.load_data import *
+from PIXOR_matssteinweg.models.PIXOR import PIXOR
 import torch.nn as nn
 import time
 import numpy as np

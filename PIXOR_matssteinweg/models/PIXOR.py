@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import copy
 import os
-import kitti_utils
+import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 
 
 ###############

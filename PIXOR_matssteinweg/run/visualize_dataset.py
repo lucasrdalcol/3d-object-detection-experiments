@@ -1,7 +1,10 @@
-from load_data import *
+from PIXOR_matssteinweg.data_processing.load_data import *
+import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
+import PIXOR_matssteinweg.config.config as config
 
 ##################
 # dataset object #
@@ -99,8 +102,8 @@ if __name__ == '__main__':
         bev_image = kitti_utils.draw_bev_image(voxel_point_cloud)
 
         # create empty labels
-        regression_label = np.zeros((OUTPUT_DIM_0, OUTPUT_DIM_1, OUTPUT_DIM_REG))
-        classification_label = np.zeros((OUTPUT_DIM_0, OUTPUT_DIM_1, OUTPUT_DIM_CLA))
+        regression_label = np.zeros((config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, config.OUTPUT_DIM_REG))
+        classification_label = np.zeros((config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, config.OUTPUT_DIM_CLA))
 
         # loop over all annotations for current sample
         for idl, label in enumerate(labels):
@@ -121,17 +124,17 @@ if __name__ == '__main__':
         label_mask = np.where(np.sum(np.abs(regression_label), axis=2) > 0, 255, 0).astype(np.uint8)
 
         # remove all points outside the specified area
-        idx = np.where(point_cloud[:, 0] > VOX_X_MIN)
+        idx = np.where(point_cloud[:, 0] > config.VOX_X_MIN)
         point_cloud = point_cloud[idx]
-        idx = np.where(point_cloud[:, 0] < VOX_X_MAX)
+        idx = np.where(point_cloud[:, 0] < config.VOX_X_MAX)
         point_cloud = point_cloud[idx]
-        idx = np.where(point_cloud[:, 1] > VOX_Y_MIN)
+        idx = np.where(point_cloud[:, 1] > config.VOX_Y_MIN)
         point_cloud = point_cloud[idx]
-        idx = np.where(point_cloud[:, 1] < VOX_Y_MAX)
+        idx = np.where(point_cloud[:, 1] < config.VOX_Y_MAX)
         point_cloud = point_cloud[idx]
-        idx = np.where(point_cloud[:, 2] > VOX_Z_MIN)
+        idx = np.where(point_cloud[:, 2] > config.VOX_Z_MIN)
         point_cloud = point_cloud[idx]
-        idx = np.where(point_cloud[:, 2] < VOX_Z_MAX)
+        idx = np.where(point_cloud[:, 2] < config.VOX_Z_MAX)
         point_cloud = point_cloud[idx]
 
         # get rectified point cloud for depth information
@@ -148,7 +151,7 @@ if __name__ == '__main__':
         for i in range(point_cloud_2d.shape[0]):
             depth = point_cloud_rect[i, 2]
             if depth > 0.1:
-                color = cmap[int(255 - depth / VOX_X_MAX * 255)-1, :]
+                color = cmap[int(255 - depth / config.VOX_X_MAX * 255)-1, :]
                 cv2.circle(image, (point_cloud_2d[i, 0], point_cloud_2d[i, 1]), radius=2, color=color, thickness=-1)
 
         # display images

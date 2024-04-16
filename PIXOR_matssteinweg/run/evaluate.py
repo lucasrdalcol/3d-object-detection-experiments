@@ -1,12 +1,13 @@
-from load_data import *
-from PIXOR import PIXOR
+from PIXOR_matssteinweg.data_processing.load_data import *
+from PIXOR_matssteinweg.models.PIXOR import PIXOR
+import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 from shapely.geometry import Polygon
 from config import *
 from scipy.linalg import block_diag
 import numpy as np
 import sys
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
-import PIXOR_matssteinweg.config as config
+import PIXOR_matssteinweg.config.config as config
 
 #######################
 # reshape predictions #

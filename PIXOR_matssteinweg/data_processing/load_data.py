@@ -2,12 +2,12 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torch
 import os
 import cv2
-import kitti_utils
+import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 import sys
 import numpy as np
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 from config import *
-import PIXOR_matssteinweg.config as config
+import PIXOR_matssteinweg.config.config as config
 import time
 
 

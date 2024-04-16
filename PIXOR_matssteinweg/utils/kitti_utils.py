@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import os
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
-import PIXOR_matssteinweg.config as config
+import PIXOR_matssteinweg.config.config as config
 
 ###################
 # 3D Label Object #

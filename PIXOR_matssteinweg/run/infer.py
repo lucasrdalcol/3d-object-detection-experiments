@@ -1,4 +1,5 @@
-from evaluate_model import *
+from PIXOR_matssteinweg.run.evaluate import *
+import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 
 ###############
 # show legend #
