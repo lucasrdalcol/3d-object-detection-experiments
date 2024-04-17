@@ -6,7 +6,6 @@ import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 import sys
 import numpy as np
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
-from config import *
 import PIXOR_matssteinweg.config.config as config
 import time
 
@@ -259,7 +258,7 @@ class PointCloudDataset(Dataset):
 # load datasets #
 #################
 
-def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, test_set=False,
+def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, num_workers=0, test_set=False,
                  device=torch.device('cpu'), show_times=False):
     """
     Create a data loader that reads in the data from a directory of png-images
@@ -274,7 +273,7 @@ def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, test_set=False
 
     # speed up data loading on gpu
     if device != torch.device('cpu'):
-        num_workers = 0
+        num_workers = num_workers
     else:
         num_workers = 0
 

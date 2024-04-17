@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from PIXOR_matssteinweg.data_processing.load_data import *
 import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 import matplotlib

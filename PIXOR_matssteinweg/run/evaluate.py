@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from PIXOR_matssteinweg.data_processing.load_data import *
 from PIXOR_matssteinweg.models.PIXOR import PIXOR
 import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
@@ -409,8 +411,8 @@ if __name__ == '__main__':
 
     # create model
     pixor = PIXOR().to(device)
-    n_epochs_trained = 2
-    pixor.load_state_dict(torch.load('/media/lucasrdalcol/data/phd_research/models/3d-object-detection-experiments/PIXOR_matssteinweg/PIXOR_Epoch_' + str(n_epochs_trained) + '.pt', map_location=device))
+    n_epochs_trained = 1
+    pixor.load_state_dict(torch.load('/media/lucasrdalcol/data/phd_research/models/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/PIXOR_Epoch_' + str(n_epochs_trained) + '.pt', map_location=device))
 
     # evaluate model
     eval_dict = evaluate_model(pixor, data_loader, distance_ranges=[70, 50, 30], iou_thresholds=[0.5, 0.6, 0.7, 0.8, 0.9])
@@ -419,4 +421,4 @@ if __name__ == '__main__':
     eval_dict['epoch'] = n_epochs_trained
 
     # save evaluation dictionary
-    np.savez('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/metrics/eval_dict_epoch_' + str(n_epochs_trained) + '.npz', eval_dict=eval_dict)
+    np.savez('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/metrics/eval_dict_epoch_' + str(n_epochs_trained) + '.npz', eval_dict=eval_dict)

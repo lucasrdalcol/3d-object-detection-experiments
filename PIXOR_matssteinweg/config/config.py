@@ -1,4 +1,37 @@
 import numpy as np
+from datetime import datetime
+import os
+
+############################
+# training hyperparameters #
+############################
+DEVICE = "cuda:0"
+N_EPOCHS = 1
+BATCH_SIZE = 2
+LEARNING_RATE = 1e-3
+EARLY_STOPPING_PATIENCE = 8
+TRAIN_VAL_SPLIT = 0.9
+NUM_WORKERS = 0
+SEED = 123
+
+###########################
+#   directory paths       #
+###########################
+PROJECT_NAME = "3d-object-detection-experiments"
+EXPERIMENT_NAME = "minitest_debug_1"
+
+# directories
+DATASET_DIR = os.path.join(os.getenv("PHD_DATASETS"), f"{PROJECT_NAME}/kitti")
+RESULTS_DIR = os.path.join(os.getenv("PHD_RESULTS"), f"{PROJECT_NAME}/PIXOR_matssteinweg/{EXPERIMENT_NAME}")
+MODELS_DIR = os.path.join(os.getenv("PHD_MODELS"), f"{PROJECT_NAME}/PIXOR_matssteinweg/{EXPERIMENT_NAME}")
+
+# Create the directories for the results and models
+os.makedirs(RESULTS_DIR, exist_ok=True)
+os.makedirs(os.path.join(RESULTS_DIR, 'detections'), exist_ok=True)
+os.makedirs(os.path.join(RESULTS_DIR, 'detections/bev'), exist_ok=True)
+os.makedirs(os.path.join(RESULTS_DIR, 'detections/camera'), exist_ok=True)
+os.makedirs(os.path.join(RESULTS_DIR, 'metrics'), exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 ###########################
 # project-level constants #

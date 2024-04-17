@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from PIXOR_matssteinweg.run.evaluate import *
 import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 
@@ -63,8 +65,8 @@ if __name__ == '__main__':
 
         # create model
         pixor = PIXOR()
-        n_epochs_trained = 2
-        pixor.load_state_dict(torch.load('/media/lucasrdalcol/data/phd_research/models/3d-object-detection-experiments/PIXOR_matssteinweg/PIXOR_Epoch_' + str(n_epochs_trained) + '.pt', map_location=device))
+        n_epochs_trained = 1
+        pixor.load_state_dict(torch.load('/media/lucasrdalcol/data/phd_research/models/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/PIXOR_Epoch_' + str(n_epochs_trained) + '.pt', map_location=device))
 
         # unsqueeze first dimension for batch
         point_cloud = point_cloud.unsqueeze(0)
@@ -134,5 +136,5 @@ if __name__ == '__main__':
 
         # save image
         print('Saving BEV and Camera images for index: ', id)
-        cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/images/detections/bev/detection_id_{:d}_bev.png'.format(id), bev_image)
-        cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/images/detections/camera/detection_id_{:d}_camera.png'.format(id), camera_image)
+        cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/detections/bev/detection_id_{:d}_bev.png'.format(id), bev_image)
+        cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/detections/camera/detection_id_{:d}_camera.png'.format(id), camera_image)

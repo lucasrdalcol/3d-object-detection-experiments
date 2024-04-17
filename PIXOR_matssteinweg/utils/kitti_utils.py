@@ -1,5 +1,4 @@
 import cv2
-from config import *
 import copy
 import numpy as np
 import sys
