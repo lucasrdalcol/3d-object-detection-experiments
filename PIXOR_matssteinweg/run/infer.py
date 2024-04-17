@@ -2,6 +2,8 @@
 
 from PIXOR_matssteinweg.run.evaluate import *
 import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
+sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
+import PIXOR_matssteinweg.config.config as config
 
 ###############
 # show legend #
@@ -39,21 +41,18 @@ def show_legend(image, ground_truth_color, prediction_color, idx):
 # detector #
 ############
 
-if __name__ == '__main__':
+def main():
 
     """
     Run the detector. Iterate over a set of indices and display final detections for the respective point cloud
     in a BEV image and the original camera image.
     """
 
-    # root directory of the dataset
-    root_dir = '/media/lucasrdalcol/data/phd_research/datasets/3d-object-detection-experiments/kitti'
-
     # device
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device(config.DEVICE if torch.cuda.is_available() else 'cpu')
 
     # create dataset
-    dataset = PointCloudDataset(root_dir, split='testing', get_image=True)
+    dataset = PointCloudDataset(config.DATASET_DIR, split='testing', get_image=True)
 
     # select index from dataset
     ids = np.arange(0, dataset.__len__())
@@ -66,7 +65,7 @@ if __name__ == '__main__':
         # create model
         pixor = PIXOR()
         n_epochs_trained = 1
-        pixor.load_state_dict(torch.load('/media/lucasrdalcol/data/phd_research/models/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/PIXOR_Epoch_' + str(n_epochs_trained) + '.pt', map_location=device))
+        pixor.load_state_dict(torch.load(os.path.join(config.MODELS_DIR, f"PIXOR_Epoch_{n_epochs_trained}.pt"), map_location=device))
 
         # unsqueeze first dimension for batch
         point_cloud = point_cloud.unsqueeze(0)
@@ -129,12 +128,18 @@ if __name__ == '__main__':
         bev_image = show_legend(bev_image, ground_truth_color, prediction_color, id)
 
         # show images
-        # print('Showing BEV and Camera images for index: ', id)
+        # print(f"Showing BEV and Camera images for index {id} of {len(ids)}")
         # cv2.imshow('BEV Image', bev_image)
         # cv2.imshow('Camera Image', camera_image)
         # cv2.waitKey()
 
         # save image
-        print('Saving BEV and Camera images for index: ', id)
-        cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/detections/bev/detection_id_{:d}_bev.png'.format(id), bev_image)
-        cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/detections/camera/detection_id_{:d}_camera.png'.format(id), camera_image)
+        print(f"Saving BEV and Camera images for index {id} of {len(ids)}")
+        # cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/detections/bev/detection_id_{:d}_bev.png'.format(id), bev_image)
+        cv2.imwrite(os.path.join(config.RESULTS_DIR, f"detections/bev/detection_id_{id}_bev.png"), bev_image)
+        # cv2.imwrite('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/detections/camera/detection_id_{:d}_camera.png'.format(id), camera_image)
+        cv2.imwrite(os.path.join(config.RESULTS_DIR, f"detections/camera/detection_id_{id}_camera.png"), camera_image)
+
+
+if __name__ == "__main__":
+    main()

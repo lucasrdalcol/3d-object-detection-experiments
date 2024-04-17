@@ -352,7 +352,7 @@ def evaluate_model(model, data_loader, distance_ranges, iou_thresholds):
                         continue
 
                 print('++++++++++++++++++++++++++++++')
-                print('Analyze Point Cloud {:d}/{:d}'.format(batch_id*batch_size+point_cloud_id+1, data_loader.dataset.__len__()))
+                print('Analyze Point Cloud {:d}/{:d}'.format(batch_id*config.BATCH_SIZE+point_cloud_id+1, data_loader.dataset.__len__()))
 
     # compute performance metrics for each evaluated distance range
     for distance_range in distance_ranges:
@@ -397,22 +397,18 @@ def evaluate_model(model, data_loader, distance_ranges, iou_thresholds):
     return eval_dict
 
 
-if __name__ == '__main__':
+def main():
 
     # set device
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-    # evaluation parameters
-    batch_size = 1
+    device = torch.device(config.DEVICE if torch.cuda.is_available() else 'cpu')
 
     # create data loader
-    root_dir = '/media/lucasrdalcol/data/phd_research/datasets/3d-object-detection-experiments/kitti'
-    data_loader = load_dataset(root=root_dir, batch_size=batch_size, device=device, test_set=True)
+    data_loader = load_dataset(root=config.DATASET_DIR, batch_size=config.BATCH_SIZE, device=device, test_set=True)
 
     # create model
     pixor = PIXOR().to(device)
     n_epochs_trained = 1
-    pixor.load_state_dict(torch.load('/media/lucasrdalcol/data/phd_research/models/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/PIXOR_Epoch_' + str(n_epochs_trained) + '.pt', map_location=device))
+    pixor.load_state_dict(torch.load(os.path.join(config.MODELS_DIR, f"PIXOR_Epoch_{n_epochs_trained}.pt"), map_location=device))
 
     # evaluate model
     eval_dict = evaluate_model(pixor, data_loader, distance_ranges=[70, 50, 30], iou_thresholds=[0.5, 0.6, 0.7, 0.8, 0.9])
@@ -421,4 +417,8 @@ if __name__ == '__main__':
     eval_dict['epoch'] = n_epochs_trained
 
     # save evaluation dictionary
-    np.savez('/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/minitest_debug_1/metrics/eval_dict_epoch_' + str(n_epochs_trained) + '.npz', eval_dict=eval_dict)
+    np.savez(os.path.join(config.RESULTS_DIR, f"metrics/eval_dict_epoch_{n_epochs_trained}.npz"), eval_dict=eval_dict)
+
+
+if __name__ == "__main__":
+    main()

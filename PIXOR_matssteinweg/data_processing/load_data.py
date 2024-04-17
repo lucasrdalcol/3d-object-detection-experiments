@@ -148,7 +148,7 @@ class PointCloudDataset(Dataset):
         if split == 'training':
             self.num_samples = 6481
         elif split == 'testing':
-            self.num_samples = 1000
+            self.num_samples = 20
         else:
             print('Unknown split: %s' % split)
             exit(-1)
