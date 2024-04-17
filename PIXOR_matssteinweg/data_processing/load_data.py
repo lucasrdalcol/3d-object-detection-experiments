@@ -5,6 +5,7 @@ import cv2
 import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 import sys
 import numpy as np
+
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
 import time
@@ -58,7 +59,10 @@ def my_collate_train(batch):
 # compute pixel labels #
 ########################
 
-def compute_pixel_labels(regression_label, classification_label, label, bbox_corners_camera_coord):
+
+def compute_pixel_labels(
+    regression_label, classification_label, label, bbox_corners_camera_coord
+):
     """
     Compute the label that will be fed into the network from the bounding box annotations of the respective point cloud.
     :param: regression_label: emtpy numpy array | shape: [OUTPUT_DIM_0, OUTPUT_DIM_1, OUTPUT_DIM_REG]
@@ -80,8 +84,13 @@ def compute_pixel_labels(regression_label, classification_label, label, bbox_cor
     bbox_corners_y = bbox_corners_camera_coord[:4, 2]
 
     # convert coordinates from m to pixels
-    corners_x_px = ((bbox_corners_x - config.VOX_Y_MIN) // config.VOX_Y_DIVISION).astype(np.int32)
-    corners_y_px = (config.INPUT_DIM_0 - ((bbox_corners_y - config.VOX_X_MIN) // config.VOX_X_DIVISION)).astype(np.int32)
+    corners_x_px = (
+        (bbox_corners_x - config.VOX_Y_MIN) // config.VOX_Y_DIVISION
+    ).astype(np.int32)
+    corners_y_px = (
+        config.INPUT_DIM_0
+        - ((bbox_corners_y - config.VOX_X_MIN) // config.VOX_X_DIVISION)
+    ).astype(np.int32)
     bbox_corners = np.vstack((corners_x_px, corners_y_px)).T
 
     # create a pixel mask of the target bounding box
@@ -89,16 +98,33 @@ def compute_pixel_labels(regression_label, classification_label, label, bbox_cor
     canvas = cv2.fillPoly(canvas, pts=[bbox_corners], color=(255, 255, 255))
 
     # resize label to fit output shape
-    canvas_resized = cv2.resize(canvas, (config.OUTPUT_DIM_1, config.OUTPUT_DIM_0), interpolation=cv2.INTER_NEAREST)
-    bbox_mask = np.where(np.sum(canvas_resized, axis=2) == 765, 1, 0).astype(np.uint8)[:, :, np.newaxis]
+    canvas_resized = cv2.resize(
+        canvas,
+        (config.OUTPUT_DIM_1, config.OUTPUT_DIM_0),
+        interpolation=cv2.INTER_NEAREST,
+    )
+    bbox_mask = np.where(np.sum(canvas_resized, axis=2) == 765, 1, 0).astype(np.uint8)[
+        :, :, np.newaxis
+    ]
 
     # get location of each pixel in m
-    x_lin = np.linspace(config.VOX_Y_MIN, config.VOX_Y_MAX-0.4, config.OUTPUT_DIM_1)
-    y_lin = np.linspace(config.VOX_X_MAX, config.VOX_X_MIN+0.4, config.OUTPUT_DIM_0)
+    x_lin = np.linspace(config.VOX_Y_MIN, config.VOX_Y_MAX - 0.4, config.OUTPUT_DIM_1)
+    y_lin = np.linspace(config.VOX_X_MAX, config.VOX_X_MIN + 0.4, config.OUTPUT_DIM_0)
     px_x, px_y = np.meshgrid(x_lin, y_lin)
 
     # create regression target
-    target = np.array([[np.cos(angle_rad), np.sin(angle_rad), -center_x_m, -center_y_m, np.log(width_m), np.log(length_m)]])
+    target = np.array(
+        [
+            [
+                np.cos(angle_rad),
+                np.sin(angle_rad),
+                -center_x_m,
+                -center_y_m,
+                np.log(width_m),
+                np.log(length_m),
+            ]
+        ]
+    )
     target = np.tile(target, (config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, 1))
 
     # take offset from pixel as regression target for bounding box location
@@ -128,7 +154,14 @@ class PointCloudDataset(Dataset):
     Characterizes a dataset for PyTorch
     """
 
-    def __init__(self, root_dir, split='training', device=torch.device('cpu'), show_times=True, get_image=False):
+    def __init__(
+        self,
+        root_dir,
+        split="training",
+        device=torch.device("cpu"),
+        show_times=True,
+        get_image=False,
+    ):
         """
         Dataset for training and testing containing point cloud, calibration object and in case of training labels
         :param root_dir: root directory of the dataset
@@ -145,19 +178,19 @@ class PointCloudDataset(Dataset):
         self.split = split
         self.split_dir = os.path.join(root_dir, split)
 
-        if split == 'training':
+        if split == "training":
             self.num_samples = 6481
-        elif split == 'testing':
+        elif split == "testing":
             self.num_samples = 20
         else:
-            print('Unknown split: %s' % split)
+            print("Unknown split: %s" % split)
             exit(-1)
 
         # paths to camera, lidar, calibration and label directories
-        self.lidar_dir = os.path.join(self.split_dir, 'velodyne')
-        self.calib_dir = os.path.join(self.split_dir, 'calib')
-        self.label_dir = os.path.join(self.split_dir, 'label_2')
-        self.image_dir = os.path.join(self.split_dir, 'image_2')
+        self.lidar_dir = os.path.join(self.split_dir, "velodyne")
+        self.calib_dir = os.path.join(self.split_dir, "calib")
+        self.label_dir = os.path.join(self.split_dir, "label_2")
+        self.image_dir = os.path.join(self.split_dir, "image_2")
 
     def __len__(self):
         # Denotes the total number of samples
@@ -169,7 +202,7 @@ class PointCloudDataset(Dataset):
         get_item_start_time = time.time()
 
         # get point cloud
-        lidar_filename = os.path.join(self.lidar_dir, '%06d.bin' % index)
+        lidar_filename = os.path.join(self.lidar_dir, "%06d.bin" % index)
         lidar_data = kitti_utils.load_velo_scan(lidar_filename)
 
         # time for loading point cloud
@@ -177,7 +210,11 @@ class PointCloudDataset(Dataset):
         read_point_cloud_time = read_point_cloud_end_time - get_item_start_time
 
         # voxelize point cloud
-        voxel_point_cloud = torch.tensor(kitti_utils.voxelize(point_cloud=lidar_data), requires_grad=True, device=self.device).float()
+        voxel_point_cloud = torch.tensor(
+            kitti_utils.voxelize(point_cloud=lidar_data),
+            requires_grad=True,
+            device=self.device,
+        ).float()
 
         # time for voxelization
         voxelization_end_time = time.time()
@@ -188,44 +225,58 @@ class PointCloudDataset(Dataset):
 
         # get image
         if self.get_image:
-            image_filename = os.path.join(self.image_dir, '%06d.png' % index)
+            image_filename = os.path.join(self.image_dir, "%06d.png" % index)
             image = kitti_utils.get_image(image_filename)
 
         # get current time
         read_labels_start_time = time.time()
 
         # get calibration
-        calib_filename = os.path.join(self.calib_dir, '%06d.txt' % index)
+        calib_filename = os.path.join(self.calib_dir, "%06d.txt" % index)
         calib = kitti_utils.Calibration(calib_filename)
 
         # get labels
-        label_filename = os.path.join(self.label_dir, '%06d.txt' % index)
+        label_filename = os.path.join(self.label_dir, "%06d.txt" % index)
         labels = kitti_utils.read_label(label_filename)
 
         read_labels_end_time = time.time()
         read_labels_time = read_labels_end_time - read_labels_start_time
 
         # compute network label
-        if self.split == 'training':
+        if self.split == "training":
             # get current time
             compute_label_start_time = time.time()
 
             # create empty pixel labels
-            regression_label = np.zeros((config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, config.OUTPUT_DIM_REG))
-            classification_label = np.zeros((config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, config.OUTPUT_DIM_CLA))
+            regression_label = np.zeros(
+                (config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, config.OUTPUT_DIM_REG)
+            )
+            classification_label = np.zeros(
+                (config.OUTPUT_DIM_0, config.OUTPUT_DIM_1, config.OUTPUT_DIM_CLA)
+            )
 
             # iterate over all 3D label objects in list
             for label in labels:
-                if label.type == 'Car':
+                if label.type == "Car":
                     # compute corners of 3D bounding box in camera coordinates
-                    _, bbox_corners_camera_coord = kitti_utils.compute_box_3d(label, calib.P, scale=1.0)
+                    _, bbox_corners_camera_coord = kitti_utils.compute_box_3d(
+                        label, calib.P, scale=1.0
+                    )
                     # get pixel label for classification and BEV bounding box
-                    regression_label, classification_label = compute_pixel_labels\
-                        (regression_label, classification_label, label, bbox_corners_camera_coord)
+                    regression_label, classification_label = compute_pixel_labels(
+                        regression_label,
+                        classification_label,
+                        label,
+                        bbox_corners_camera_coord,
+                    )
 
             # stack classification and regression label
-            regression_label = torch.tensor(regression_label, device=self.device).float()
-            classification_label = torch.tensor(classification_label, device=self.device).float()
+            regression_label = torch.tensor(
+                regression_label, device=self.device
+            ).float()
+            classification_label = torch.tensor(
+                classification_label, device=self.device
+            ).float()
             training_label = torch.cat((regression_label, classification_label), dim=2)
 
             # get time for computing pixel label
@@ -237,13 +288,13 @@ class PointCloudDataset(Dataset):
             get_item_time = get_item_end_time - get_item_start_time
 
             if self.show_times:
-                print('---------------------------')
-                print('Get Item Time: {:.4f} s'.format(get_item_time))
-                print('---------------------------')
-                print('Read Point Cloud Time: {:.4f} s'.format(read_point_cloud_time))
-                print('Voxelization Time: {:.4f} s'.format(voxelization_time))
-                print('Read Labels Time: {:.4f} s'.format(read_labels_time))
-                print('Compute Labels Time: {:.4f} s'.format(compute_label_time))
+                print("---------------------------")
+                print("Get Item Time: {:.4f} s".format(get_item_time))
+                print("---------------------------")
+                print("Read Point Cloud Time: {:.4f} s".format(read_point_cloud_time))
+                print("Voxelization Time: {:.4f} s".format(voxelization_time))
+                print("Read Labels Time: {:.4f} s".format(read_labels_time))
+                print("Compute Labels Time: {:.4f} s".format(compute_label_time))
 
             return voxel_point_cloud, training_label
 
@@ -258,8 +309,16 @@ class PointCloudDataset(Dataset):
 # load datasets #
 #################
 
-def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, num_workers=0, test_set=False,
-                 device=torch.device('cpu'), show_times=False):
+
+def load_dataset(
+    root="Data/",
+    batch_size=1,
+    train_val_split=0.9,
+    num_workers=0,
+    test_set=False,
+    device=torch.device("cpu"),
+    show_times=False,
+):
     """
     Create a data loader that reads in the data from a directory of png-images
     :param device: device of the model
@@ -272,7 +331,7 @@ def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, num_workers=0,
     """
 
     # speed up data loading on gpu
-    if device != torch.device('cpu'):
+    if device != torch.device("cpu"):
         num_workers = num_workers
     else:
         num_workers = 0
@@ -281,7 +340,9 @@ def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, num_workers=0,
     if not test_set:
 
         # create customized dataset class
-        dataset = PointCloudDataset(root_dir=root, device=device, split='training', show_times=show_times)
+        dataset = PointCloudDataset(
+            root_dir=root, device=device, split="training", show_times=show_times
+        )
 
         # number of images used for training and validation
         n_images = dataset.__len__()
@@ -293,29 +354,47 @@ def load_dataset(root='Data/', batch_size=1, train_val_split=0.9, num_workers=0,
 
         # create data_loaders
         data_loader = {
-            'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=my_collate_train,
-                                num_workers=num_workers),
-            'val': DataLoader(val_dataset, batch_size=batch_size, shuffle=True, collate_fn=my_collate_train,
-                              num_workers=num_workers)
+            "train": DataLoader(
+                train_dataset,
+                batch_size=batch_size,
+                shuffle=True,
+                collate_fn=my_collate_train,
+                num_workers=num_workers,
+            ),
+            "val": DataLoader(
+                val_dataset,
+                batch_size=batch_size,
+                shuffle=True,
+                collate_fn=my_collate_train,
+                num_workers=num_workers,
+            ),
         }
 
     # create test set
     else:
 
-        test_dataset = PointCloudDataset(root_dir=root, device=device, split='testing')
-        data_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=my_collate_test,
-                                 num_workers=num_workers, drop_last=True)
+        test_dataset = PointCloudDataset(root_dir=root, device=device, split="testing")
+        data_loader = DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            collate_fn=my_collate_test,
+            num_workers=num_workers,
+            drop_last=True,
+        )
 
     return data_loader
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # create data loader
-    root_dir = 'Data/'
+    root_dir = "Data/"
     batch_size = 1
-    device = torch.device('cpu')
-    data_loader = load_dataset(root=root_dir, batch_size=batch_size, device=device, show_times=True)['train']
+    device = torch.device("cpu")
+    data_loader = load_dataset(
+        root=root_dir, batch_size=batch_size, device=device, show_times=True
+    )["train"]
 
     for batch_id, (batch_data, batch_labels) in enumerate(data_loader):
         pass

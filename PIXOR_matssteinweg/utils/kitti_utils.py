@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import sys
 import os
+
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
 
@@ -13,13 +14,15 @@ import PIXOR_matssteinweg.config.config as config
 
 class Object3D(object):
     def __init__(self, label_file_line):
-        data = label_file_line.split(' ')
+        data = label_file_line.split(" ")
         data[1:] = [float(x) for x in data[1:]]
 
         # extract label, truncation, occlusion
         self.type = data[0]  # 'Car', 'Pedestrian', ...
         self.truncation = data[1]  # truncated pixel ratio [0..1]
-        self.occlusion = int(data[2])  # 0=visible, 1=partly occluded, 2=fully occluded, 3=unknown
+        self.occlusion = int(
+            data[2]
+        )  # 0=visible, 1=partly occluded, 2=fully occluded, 3=unknown
         self.alpha = data[3]  # object observation angle [-pi..pi]
 
         # extract 2d bounding box in 0-based coordinates
@@ -37,14 +40,19 @@ class Object3D(object):
         self.ry = data[14]  # yaw angle (around Y-axis in camera coordinates) [-pi..pi]
 
     def print_object(self):
-        print('Type, truncation, occlusion, alpha: %s, %d, %d, %f' % \
-              (self.type, self.truncation, self.occlusion, self.alpha))
-        print('2d bbox (x0,y0,x1,y1): %f, %f, %f, %f' % \
-              (self.xmin, self.ymin, self.xmax, self.ymax))
-        print('3d bbox h,w,l: %f, %f, %f' % \
-              (self.height, self.width, self.length))
-        print('3d bbox location, ry: (%f, %f, %f), %f' % \
-              (self.t[0], self.t[1], self.t[2], self.ry))
+        print(
+            "Type, truncation, occlusion, alpha: %s, %d, %d, %f"
+            % (self.type, self.truncation, self.occlusion, self.alpha)
+        )
+        print(
+            "2d bbox (x0,y0,x1,y1): %f, %f, %f, %f"
+            % (self.xmin, self.ymin, self.xmax, self.ymax)
+        )
+        print("3d bbox h,w,l: %f, %f, %f" % (self.height, self.width, self.length))
+        print(
+            "3d bbox location, ry: (%f, %f, %f), %f"
+            % (self.t[0], self.t[1], self.t[2], self.ry)
+        )
 
 
 ######################
@@ -94,14 +102,14 @@ class Calibration(object):
 
         calibs = self.read_calib_file(calib_filepath)
         # Projection matrix from rect camera coord to image2 coord
-        self.P = calibs['P2']
+        self.P = calibs["P2"]
         self.P = np.reshape(self.P, [3, 4])
         # Rigid transform from Velodyne coord to reference camera coord
-        self.V2C = calibs['Tr_velo_to_cam']
+        self.V2C = calibs["Tr_velo_to_cam"]
         self.V2C = np.reshape(self.V2C, [3, 4])
         self.C2V = inverse_rigid_trans(self.V2C)
         # Rotation from reference camera coord to rect camera coord
-        self.R0 = calibs['R0_rect']
+        self.R0 = calibs["R0_rect"]
         self.R0 = np.reshape(self.R0, [3, 3])
         # Camera intrinsics and extrinsics
         self.c_u = self.P[0, 2]
@@ -119,12 +127,12 @@ class Calibration(object):
         :return:
         """
         data = {}
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             for line in f.readlines():
                 line = line.rstrip()
                 if len(line) == 0:
                     continue
-                key, value = line.split(':', 1)
+                key, value = line.split(":", 1)
                 # The only non-float values in these files are dates, which
                 # we don't care about anyway
                 try:
@@ -214,9 +222,27 @@ def compute_box_3d(label, P, scale=1.0):
     width = label.width * scale
     height = label.height * scale
     # 3d bounding box corners
-    x_corners = [length / 2, length / 2, -length / 2, -length / 2, length / 2, length / 2, -length / 2, -length / 2]
+    x_corners = [
+        length / 2,
+        length / 2,
+        -length / 2,
+        -length / 2,
+        length / 2,
+        length / 2,
+        -length / 2,
+        -length / 2,
+    ]
     y_corners = [-height, -height, -height, -height, 0, 0, 0, 0]
-    z_corners = [-width / 2, width / 2, width / 2, -width / 2, -width / 2, width / 2, width / 2, -width / 2]
+    z_corners = [
+        -width / 2,
+        width / 2,
+        width / 2,
+        -width / 2,
+        -width / 2,
+        width / 2,
+        width / 2,
+        -width / 2,
+    ]
 
     # rotate and translate 3d bounding box
     corners_3d = np.dot(R, np.vstack([x_corners, y_corners, z_corners]))
@@ -237,6 +263,7 @@ def compute_box_3d(label, P, scale=1.0):
 #####################
 # Drawing Functions #
 #####################
+
 
 # draw projected 3D bounding box
 def draw_projected_box_3d(image, corners_2d, color=(0, 255, 0), thickness=2):
@@ -260,26 +287,46 @@ def draw_projected_box_3d(image, corners_2d, color=(0, 255, 0), thickness=2):
 
     for k in range(0, 4):
         i, j = k, (k + 1) % 4
-        image = cv2.line(image, (corners_2d[i, 0], corners_2d[i, 1]), (corners_2d[j, 0], corners_2d[j, 1]), color, thickness)
+        image = cv2.line(
+            image,
+            (corners_2d[i, 0], corners_2d[i, 1]),
+            (corners_2d[j, 0], corners_2d[j, 1]),
+            color,
+            thickness,
+        )
         i, j = k + 4, (k + 1) % 4 + 4
-        image = cv2.line(image, (corners_2d[i, 0], corners_2d[i, 1]), (corners_2d[j, 0], corners_2d[j, 1]), color, thickness)
+        image = cv2.line(
+            image,
+            (corners_2d[i, 0], corners_2d[i, 1]),
+            (corners_2d[j, 0], corners_2d[j, 1]),
+            color,
+            thickness,
+        )
         i, j = k, k + 4
-        image = cv2.line(image, (corners_2d[i, 0], corners_2d[i, 1]), (corners_2d[j, 0], corners_2d[j, 1]), color, thickness)
+        image = cv2.line(
+            image,
+            (corners_2d[i, 0], corners_2d[i, 1]),
+            (corners_2d[j, 0], corners_2d[j, 1]),
+            color,
+            thickness,
+        )
 
     return image
 
 
 # draw projected BEV bounding box
-def draw_projected_box_bev(image, corners_3d, color=(0, 255, 0), thickness=1, confidence_score=None):
+def draw_projected_box_bev(
+    image, corners_3d, color=(0, 255, 0), thickness=1, confidence_score=None
+):
     """
-     Draw BEV bounding box on image
-     :param image: bev image of observable area
-     :param corners_3d: corners of 3D bounding box in camera coordinates
-     :param color:
-     :param thickness:
-     :param confidence_score: optional confidence score of the prediction to be displayed next to the bounding box
-     :return: image with BEV bounding box
-     """
+    Draw BEV bounding box on image
+    :param image: bev image of observable area
+    :param corners_3d: corners of 3D bounding box in camera coordinates
+    :param color:
+    :param thickness:
+    :param confidence_score: optional confidence score of the prediction to be displayed next to the bounding box
+    :return: image with BEV bounding box
+    """
 
     # extract corners of BEV bounding box either already transformed to x/y-coordinates or from camera coordinates
     if corners_3d.shape[1] == 3:
@@ -290,27 +337,59 @@ def draw_projected_box_bev(image, corners_3d, color=(0, 255, 0), thickness=1, co
         corners_y = corners_3d[:4, 1]
 
     # convert coordinates from m to image coordinates
-    pixel_corners_x = ((corners_x - config.VOX_Y_MIN) // config.VOX_Y_DIVISION).astype(np.int32)
-    pixel_corners_y = (config.INPUT_DIM_0 - ((corners_y - config.VOX_X_MIN) // config.VOX_X_DIVISION)).astype(np.int32)
+    pixel_corners_x = ((corners_x - config.VOX_Y_MIN) // config.VOX_Y_DIVISION).astype(
+        np.int32
+    )
+    pixel_corners_y = (
+        config.INPUT_DIM_0 - ((corners_y - config.VOX_X_MIN) // config.VOX_X_DIVISION)
+    ).astype(np.int32)
 
     # draw BEV bounding box and mark front in different color
-    image = cv2.line(image, (pixel_corners_x[3], pixel_corners_y[3]), (pixel_corners_x[0], pixel_corners_y[0]), color,
-                     thickness)
-    image = cv2.line(image, (pixel_corners_x[0], pixel_corners_y[0]), (pixel_corners_x[1], pixel_corners_y[1]), color,
-                     thickness+1)
-    image = cv2.line(image, (pixel_corners_x[1], pixel_corners_y[1]), (pixel_corners_x[2], pixel_corners_y[2]), color,
-                     thickness)
-    image = cv2.line(image, (pixel_corners_x[2], pixel_corners_y[2]), (pixel_corners_x[3], pixel_corners_y[3]), color,
-                     thickness)
+    image = cv2.line(
+        image,
+        (pixel_corners_x[3], pixel_corners_y[3]),
+        (pixel_corners_x[0], pixel_corners_y[0]),
+        color,
+        thickness,
+    )
+    image = cv2.line(
+        image,
+        (pixel_corners_x[0], pixel_corners_y[0]),
+        (pixel_corners_x[1], pixel_corners_y[1]),
+        color,
+        thickness + 1,
+    )
+    image = cv2.line(
+        image,
+        (pixel_corners_x[1], pixel_corners_y[1]),
+        (pixel_corners_x[2], pixel_corners_y[2]),
+        color,
+        thickness,
+    )
+    image = cv2.line(
+        image,
+        (pixel_corners_x[2], pixel_corners_y[2]),
+        (pixel_corners_x[3], pixel_corners_y[3]),
+        color,
+        thickness,
+    )
 
     # display confidence score if provided
     if confidence_score:
-        text = str(round(confidence_score, 2))  # round confidence score to two decimal digits
+        text = str(
+            round(confidence_score, 2)
+        )  # round confidence score to two decimal digits
         font = cv2.FONT_HERSHEY_DUPLEX
         font_scale = 0.5
-        size = cv2.getTextSize(text, font, font_scale, thickness)  # get the size of the displayed text
-        pos_x = int(np.mean(pixel_corners_x)) - (size[0][0] // 2)  # center text in x-center of bounding box
-        pos_y = np.min(pixel_corners_y) - 5  # display text slightly above the bounding box
+        size = cv2.getTextSize(
+            text, font, font_scale, thickness
+        )  # get the size of the displayed text
+        pos_x = int(np.mean(pixel_corners_x)) - (
+            size[0][0] // 2
+        )  # center text in x-center of bounding box
+        pos_y = (
+            np.min(pixel_corners_y) - 5
+        )  # display text slightly above the bounding box
         cv2.putText(image, text, (pos_x, pos_y), font, font_scale, color=color)
 
     return image
@@ -326,16 +405,20 @@ def draw_bev_image(point_cloud):
 
     bev_image = np.sum(point_cloud, axis=2)
     bev_image = bev_image - np.min(bev_image)
-    divisor = np.max(bev_image)-np.min(bev_image)
-    bev_image = 255 - (bev_image/divisor*255)
+    divisor = np.max(bev_image) - np.min(bev_image)
+    bev_image = 255 - (bev_image / divisor * 255)
     bev_image = np.dstack((bev_image, bev_image, bev_image)).astype(np.uint8)
 
     # add gray area to indicate camera FOV
     bev_image_bg = copy.copy(bev_image)
     triangle_cnt1 = np.array([(400, 700), (0, 700), (0, 300)])
-    bev_image_bg = cv2.drawContours(bev_image_bg, [triangle_cnt1], 0, (120, 120, 120), -1)
+    bev_image_bg = cv2.drawContours(
+        bev_image_bg, [triangle_cnt1], 0, (120, 120, 120), -1
+    )
     triangle_cnt2 = np.array([(400, 700), (800, 700), (800, 300)])
-    bev_image_bg = cv2.drawContours(bev_image_bg, [triangle_cnt2], 0, (120, 120, 120), -1)
+    bev_image_bg = cv2.drawContours(
+        bev_image_bg, [triangle_cnt2], 0, (120, 120, 120), -1
+    )
 
     # overlay background image to indicate FOV
     alpha = 0.2
@@ -348,10 +431,11 @@ def draw_bev_image(point_cloud):
 # Reader Functions #
 ####################
 
+
 # read label file
 def read_label(label_filename):
     lines = [line.rstrip() for line in open(label_filename)]
-    lines = [line for line in lines if line.split(' ')[0] != 'DontCare']
+    lines = [line for line in lines if line.split(" ")[0] != "DontCare"]
     objects = [Object3D(line) for line in lines]
     return objects
 
@@ -372,6 +456,7 @@ def get_image(img_filename):
 # Helper Functions #
 ####################
 
+
 # invert transformation matrix
 def inverse_rigid_trans(tr):
     """
@@ -390,9 +475,7 @@ def inverse_rigid_trans(tr):
 def rot_y(t):
     c = np.cos(t)
     s = np.sin(t)
-    return np.array([[c, 0, s],
-                     [0, 1, 0],
-                     [-s, 0, c]])
+    return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
 
 # project 3D points to image plane
@@ -444,15 +527,24 @@ def voxelize(point_cloud):
     prs = point_cloud[:, 3]
 
     # convert velodyne coordinates to voxel
-    qxs = (config.INPUT_DIM_0 - 1 - ((pxs - config.VOX_X_MIN) // config.VOX_X_DIVISION)).astype(np.int32)
+    qxs = (
+        config.INPUT_DIM_0 - 1 - ((pxs - config.VOX_X_MIN) // config.VOX_X_DIVISION)
+    ).astype(np.int32)
     qys = ((-pys - config.VOX_Y_MIN) // config.VOX_Y_DIVISION).astype(np.int32)
     qzs = ((pzs - config.VOX_Z_MIN) // config.VOX_Z_DIVISION).astype(np.int32)
     quantized = np.dstack((qxs, qys, qzs, prs)).squeeze()
 
     # create empty voxel grid and reflectance image
-    voxel_grid = np.zeros(shape=(config.INPUT_DIM_0, config.INPUT_DIM_1, config.INPUT_DIM_2-1), dtype=np.float32)
-    reflectance_image = np.zeros(shape=(config.INPUT_DIM_0, config.INPUT_DIM_1), dtype=np.float32)
-    reflectance_count = np.zeros(shape=(config.INPUT_DIM_0, config.INPUT_DIM_1), dtype=np.float32)
+    voxel_grid = np.zeros(
+        shape=(config.INPUT_DIM_0, config.INPUT_DIM_1, config.INPUT_DIM_2 - 1),
+        dtype=np.float32,
+    )
+    reflectance_image = np.zeros(
+        shape=(config.INPUT_DIM_0, config.INPUT_DIM_1), dtype=np.float32
+    )
+    reflectance_count = np.zeros(
+        shape=(config.INPUT_DIM_0, config.INPUT_DIM_1), dtype=np.float32
+    )
 
     # iterate over each point to fill occupancy grid and compute reflectance image
     for point_id, point in enumerate(quantized):
@@ -468,8 +560,3 @@ def voxelize(point_cloud):
     voxel_output = np.dstack((voxel_grid, reflectance_image))
 
     return voxel_output
-
-
-
-
-

@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import sys
 import os
+
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
 
@@ -44,9 +45,17 @@ class EarlyStopping:
             # increase counter
             self.counter += 1
 
-            print('Validation loss did not decrease ({:.6f} --> {:.6f})'.format(self.val_loss_min, val_loss))
-            print('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
-            print('###########################################################')
+            print(
+                "Validation loss did not decrease ({:.6f} --> {:.6f})".format(
+                    self.val_loss_min, val_loss
+                )
+            )
+            print(
+                "EarlyStopping counter: {} out of {}".format(
+                    self.counter, self.patience
+                )
+            )
+            print("###########################################################")
 
             # stop training if patience is reached
             if self.counter >= self.patience:
@@ -67,12 +76,19 @@ class EarlyStopping:
         """
 
         if self.verbose:
-            print('Validation loss decreased ({:.6f} --> {:.6f}).  '
-                  'Saving model ...'.format(self.val_loss_min, val_loss))
-            print('###########################################################')
+            print(
+                "Validation loss decreased ({:.6f} --> {:.6f}).  "
+                "Saving model ...".format(self.val_loss_min, val_loss)
+            )
+            print("###########################################################")
 
         # save model
-        torch.save(model.state_dict(), os.path.join(config.MODELS_DIR,'PIXOR_Epoch_') + str(self.best_epoch) + '.pt')
+        torch.save(
+            model.state_dict(),
+            os.path.join(config.MODELS_DIR, "PIXOR_Epoch_")
+            + str(self.best_epoch)
+            + ".pt",
+        )
 
         # set current loss as new minimum loss
         self.val_loss_min = val_loss

@@ -2,6 +2,7 @@ import torch
 import random
 import numpy as np
 
+
 def seed_everything(seed=123):
     """
     Seeds basic parameters for reproductibility of results.

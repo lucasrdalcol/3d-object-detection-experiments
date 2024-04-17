@@ -19,10 +19,10 @@ class FocalLoss(nn.Module):
     def forward(self, prediction, target):
 
         # get class probability
-        pt = torch.where(target == 1.0, prediction, 1-prediction)
+        pt = torch.where(target == 1.0, prediction, 1 - prediction)
 
         # compute focal loss
-        loss = -1 * (1-pt)**self.gamma * torch.log(pt)
+        loss = -1 * (1 - pt) ** self.gamma * torch.log(pt)
 
         if self.size_average:
             return loss.mean()
@@ -49,15 +49,27 @@ def compute_total_loss(batch_predictions, batch_labels):
 
     # regression loss
     regression_prediction = batch_predictions[:, :, :, :-1]
-    regression_prediction = regression_prediction.contiguous().view([regression_prediction.size(0)*
-                        regression_prediction.size(1)*regression_prediction.size(2), regression_prediction.size(3)])
+    regression_prediction = regression_prediction.contiguous().view(
+        [
+            regression_prediction.size(0)
+            * regression_prediction.size(1)
+            * regression_prediction.size(2),
+            regression_prediction.size(3),
+        ]
+    )
     regression_label = batch_labels[:, :, :, :-1]
-    regression_label = regression_label.contiguous().view([regression_label.size(0)*regression_label.size(1)*
-                                                           regression_label.size(2), regression_label.size(3)])
+    regression_label = regression_label.contiguous().view(
+        [
+            regression_label.size(0)
+            * regression_label.size(1)
+            * regression_label.size(2),
+            regression_label.size(3),
+        ]
+    )
     positive_mask = torch.nonzero(torch.sum(torch.abs(regression_label), dim=1))
     pos_regression_label = regression_label[positive_mask.squeeze(), :]
     pos_regression_prediction = regression_prediction[positive_mask.squeeze(), :]
-    smooth_l1 = nn.SmoothL1Loss(reduction='sum')
+    smooth_l1 = nn.SmoothL1Loss(reduction="sum")
     regression_loss = smooth_l1(pos_regression_prediction, pos_regression_label)
 
     # add two loss components
