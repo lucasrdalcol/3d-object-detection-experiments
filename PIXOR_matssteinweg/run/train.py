@@ -67,6 +67,7 @@ def train_model(
                 model.eval()  # Set model to evaluate mode
 
             for batch_id, (batch_data, batch_labels) in enumerate(data_loaders[phase]):
+                # print(f"file index: {index}")
 
                 # zero the parameter gradients
                 optimizer.zero_grad()

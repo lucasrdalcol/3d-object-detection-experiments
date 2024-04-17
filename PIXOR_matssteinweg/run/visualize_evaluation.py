@@ -81,7 +81,7 @@ def plot_precision_recall_curve(eval_dicts, save=True):
     plt.tight_layout()
     if save:
         plt.savefig(
-            "/media/lucasrdalcol/data/phd_research/results/3d-object-detection-experiments/PIXOR_matssteinweg/test0_2epochs/metrics/precision_recall_curves.png",
+            os.path.join(config.RESULTS_DIR, f"metrics/precision_recall_curves.png"),
             dpi=300,
             bbox_inches="tight",
         )

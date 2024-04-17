@@ -181,7 +181,7 @@ class PointCloudDataset(Dataset):
         if split == "training":
             self.num_samples = 6481
         elif split == "testing":
-            self.num_samples = 20
+            self.num_samples = 1000
         else:
             print("Unknown split: %s" % split)
             exit(-1)
@@ -197,6 +197,8 @@ class PointCloudDataset(Dataset):
         return self.num_samples
 
     def __getitem__(self, index):
+        if self.split == "testing":
+            index += 6481
 
         # start time
         get_item_start_time = time.time()
