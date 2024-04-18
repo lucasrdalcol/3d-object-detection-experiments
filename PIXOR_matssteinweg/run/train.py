@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# import importlib
+import importlib
 import torch.optim as optim
 from PIXOR_matssteinweg.data_processing.load_data import *
 from PIXOR_matssteinweg.models.PIXOR import PIXOR
@@ -10,7 +10,8 @@ import torch.nn as nn
 import time
 import numpy as np
 
-# import wandb
+import wandb
+
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
 from PIXOR_matssteinweg.utils.common import *
@@ -51,6 +52,8 @@ def train_model(
         for param_group in optimizer.param_groups:
             metrics["lr"].append(param_group["lr"])
 
+        current_losses = {"train_current_loss": [], "val_current_loss": []}
+
         # print header
         print("###########################################################")
         print("Epoch: " + str(epoch + 1) + "/" + str(n_epochs))
@@ -60,6 +63,7 @@ def train_model(
         for phase in ["train", "val"]:
             print(f"phase: {phase}")
 
+            progress_step = 1 / len(data_loaders[phase])
             # track average loss per batch
             if phase == "train":
                 model.train()  # Set model to training mode
@@ -90,14 +94,38 @@ def train_model(
 
                     # accumulate loss
                     if moving_loss[phase] is None:
-                        moving_loss[phase] = loss.item()
+                        moving_loss[phase] = loss.detach().item()
                     else:
                         moving_loss[phase] = (
-                            0.99 * moving_loss[phase] + 0.01 * loss.item()
+                            0.99 * moving_loss[phase] + 0.01 * loss.detach().item()
                         )
 
                     # append loss for each phase
                     metrics[phase + "_loss"].append(moving_loss[phase])
+                    current_losses[phase + "_current_loss"].append(loss.detach().item())
+
+                    if phase == "train":
+                        wandb.log(
+                            {
+                                "train": {
+                                    "moving_loss": moving_loss[phase],
+                                    "discretized_epoch": epoch
+                                    + progress_step
+                                    + batch_id / len(data_loaders[phase]),
+                                },
+                            }
+                        )
+                    elif phase == "val":
+                        wandb.log(
+                            {
+                                "val": {
+                                    "moving_loss": moving_loss[phase],
+                                    "discretized_epoch": epoch
+                                    + progress_step
+                                    + batch_id / len(data_loaders[phase]),
+                                },
+                            }
+                        )
 
                     # backward + optimize only if in training phase
                     if phase == "train":
@@ -139,19 +167,31 @@ def train_model(
 
         # scheduler step
         scheduler.step()
+        train_average_loss = sum(current_losses["train_current_loss"]) / len(
+            current_losses["train_current_loss"]
+        )
+        val_average_loss = sum(current_losses["val_current_loss"]) / len(
+            current_losses["val_current_loss"]
+        )
 
         # output progress
-        print("Training Loss: %.4f" % metrics["train_loss"][-1])
-        print("Validation Loss: %.4f" % metrics["val_loss"][-1])
+        print("Training Moving Loss: %.4f" % metrics["train_loss"][-1])
+        print("Training Average Loss: %.4f" % train_average_loss)
+        print("Validation Moving Loss: %.4f" % metrics["val_loss"][-1])
+        print("Validation Average Loss: %.4f" % val_average_loss)
 
-        # # Log metrics to wandb
-        # wandb.log(
-        #     {
-        #         "epoch": epoch + 1,
-        #         "train": {"loss": metrics['train_loss'][-1]},
-        #         "val": {"loss": metrics['val_loss'][-1]},
-        #     }
-        # )
+        wandb.log(
+            {
+                "train": {
+                    "average_loss": train_average_loss,
+                    "epoch": epoch+1,
+                },
+                "val": {
+                    "average_loss": val_average_loss,
+                    "epoch": epoch+1,
+                },
+            }
+        )
 
         # save metrics
         np.savez(
@@ -162,7 +202,7 @@ def train_model(
         )
 
         # check early stopping
-        early_stopping(val_loss=metrics["val_loss"][-1], epoch=epoch, model=model)
+        early_stopping(val_loss=val_average_loss, epoch=epoch, model=model)
         if early_stopping.early_stop:
             print("Early Stopping!")
             break
@@ -179,28 +219,29 @@ def train_model(
 
 
 def main():
+    # torch.multiprocessing.set_start_method('spawn')
 
-    # # Config dict creation
-    # spec = importlib.util.spec_from_file_location(
-    #     "config", os.path.abspath(config.__file__)
-    # )
-    # config_module = importlib.util.module_from_spec(spec)
-    # spec.loader.exec_module(config_module)
-    # cfg = {
-    #     name: getattr(config_module, name)
-    #     for name in dir(config_module)
-    #     if not name.startswith("__") and name.isupper()
-    # }
+    # Config dict creation
+    spec = importlib.util.spec_from_file_location(
+        "config", os.path.abspath(config.__file__)
+    )
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+    cfg = {
+        name: getattr(config_module, name)
+        for name in dir(config_module)
+        if not name.startswith("__") and name.isupper()
+    }
 
-    # # start a new wandb run to track this script
-    # wandb.init(
-    #     # set the wandb project where this run will be logged
-    #     project="PIXOR",
-    #     name=config.EXPERIMENT_NAME,
-    #     # track hyperparameters and run metadata
-    #     # config=cfg,
-    #     # mode="disabled",
-    # )
+    # start a new wandb run to track this script
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="PIXOR",
+        name=config.EXPERIMENT_NAME,
+        # track hyperparameters and run metadata
+        config=cfg,
+        # mode="disabled",
+    )
 
     # set device
     device = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")

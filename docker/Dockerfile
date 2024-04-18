@@ -26,7 +26,7 @@ ENV PHD_MODELS="/root/models"
 ENV PHD_RESULTS="/root/results"
 
 ENV PYTHONPATH="/root/repositories/${PROJECT_NAME}"
-ENV TWODOBJECTDETECTION_ROOT="/root/repositories/${PROJECT_NAME}"
+ENV THREEDOBJECTDETECTION_ROOT="/root/repositories/${PROJECT_NAME}"
 
 ENV WANDB_DIR="/root/results/${PROJECT_NAME}"
 
