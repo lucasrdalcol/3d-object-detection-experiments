@@ -4,7 +4,7 @@ import os
 import numpy as np
 import matplotlib
 
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import sys
 
@@ -12,7 +12,7 @@ sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
 
 
-def plot_precision_recall_curve(eval_dicts, save=True):
+def plot_precision_recall_curve(eval_dicts, save=True, show=False):
     """
     Plot precision recall curve using all available metrics stored in the evaluation dictionaries.
     :param eval_dicts: evaluation dictionary
@@ -69,7 +69,7 @@ def plot_precision_recall_curve(eval_dicts, save=True):
                     linewidth=1,
                     linestyle=description[eval_id],
                     color=colors[eval_id],
-                    label="mAP[0.5:0.9] = {0:0.2f}".format(distance_dict["mAP"]),
+                    label="mAP[0.5:0.9] = {0:0.2f}%".format(distance_dict["mAP"]*100),
                 )[0]
             plots.append(plot)
 
@@ -85,21 +85,21 @@ def plot_precision_recall_curve(eval_dicts, save=True):
             dpi=300,
             bbox_inches="tight",
         )
-    plt.show()
+    if show:
+        plt.show()
 
 
 def main():
 
-    n_epochs_trained = 2
     eval_dict = np.load(
         os.path.join(
-            config.RESULTS_DIR, f"metrics/eval_dict_epoch_{n_epochs_trained}.npz"
+            config.RESULTS_DIR, f"metrics/eval_dict_epoch_{config.N_EPOCHS_TRAINED}.npz"
         ),
         allow_pickle=True,
     )["eval_dict"].item()
 
     eval_dicts = [eval_dict]
-    plot_precision_recall_curve(eval_dicts, save=True)
+    plot_precision_recall_curve(eval_dicts, save=True, show=False)
 
 
 if __name__ == "__main__":

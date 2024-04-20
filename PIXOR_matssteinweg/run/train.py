@@ -11,6 +11,8 @@ import time
 import numpy as np
 
 import wandb
+import sys
+import os
 
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
@@ -184,11 +186,11 @@ def train_model(
             {
                 "train": {
                     "average_loss": train_average_loss,
-                    "epoch": epoch+1,
+                    "epoch": epoch + 1,
                 },
                 "val": {
                     "average_loss": val_average_loss,
-                    "epoch": epoch+1,
+                    "epoch": epoch + 1,
                 },
             }
         )

@@ -4,10 +4,10 @@ from PIXOR_matssteinweg.data_processing.load_data import *
 from PIXOR_matssteinweg.models.PIXOR import PIXOR
 import PIXOR_matssteinweg.utils.kitti_utils as kitti_utils
 from shapely.geometry import Polygon
-from config import *
 from scipy.linalg import block_diag
 import numpy as np
 import sys
+import os
 
 sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
@@ -315,8 +315,8 @@ def evaluate_model(model, data_loader, distance_ranges, iou_thresholds):
                 # get coordinates of all relevant ground truth boxes
                 ground_truth_box_corners = None
                 for label in batch_labels[point_cloud_id]:
-                    # only consider annotations for class "Car"
-                    if label.type == "Car":
+                    # only consider annotations for class "Car" or "car"
+                    if label.type == "Car" or label.type == "car":
                         # compute corners of the bounding box
                         _, bbox_corners_camera_coord = kitti_utils.compute_box_3d(
                             label, batch_calib[point_cloud_id].P
@@ -587,10 +587,9 @@ def main():
 
     # create model
     pixor = PIXOR().to(device)
-    n_epochs_trained = 1
     pixor.load_state_dict(
         torch.load(
-            os.path.join(config.MODELS_DIR, f"PIXOR_Epoch_{n_epochs_trained}.pt"),
+            os.path.join(config.MODELS_DIR, f"PIXOR_Epoch_{config.N_EPOCHS_TRAINED}.pt"),
             map_location=device,
         )
     )
@@ -604,12 +603,12 @@ def main():
     )
 
     # add identifier to dictionary
-    eval_dict["epoch"] = n_epochs_trained
+    eval_dict["epoch"] = config.N_EPOCHS_TRAINED
 
     # save evaluation dictionary
     np.savez(
         os.path.join(
-            config.RESULTS_DIR, f"metrics/eval_dict_epoch_{n_epochs_trained}.npz"
+            config.RESULTS_DIR, f"metrics/eval_dict_epoch_{config.N_EPOCHS_TRAINED}.npz"
         ),
         eval_dict=eval_dict,
     )

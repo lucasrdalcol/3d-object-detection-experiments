@@ -6,24 +6,35 @@ import os
 # training hyperparameters #
 ############################
 DEVICE = "cuda:0"
-N_EPOCHS = 40
-BATCH_SIZE = 6
+N_EPOCHS = 80
+BATCH_SIZE = 1
 LEARNING_RATE = 1e-3
 EARLY_STOPPING_PATIENCE = 8
 TRAIN_VAL_SPLIT = 0.9
 NUM_WORKERS = 0  # should stay 0 since the implementation mixed the CPU and GPU operations, therefore we cannot use multiple workers
 SEED = 100
+DATASET = "nuscenes_mini"
+N_EPOCHS_TRAINED = 23
 
 ###########################
 #   directory paths       #
 ###########################
 PROJECT_NAME = "3d-object-detection-experiments"
-EXPERIMENT_NAME = "training_50epochs_6batchsize_1e-3lr"
+EXPERIMENT_NAME = "nuscenes_mini_80epochs_6batchsize_1e-3lr"
 
 # directories
-DATASET_DIR = os.path.join(
-    os.getenv("PHD_DATASETS"), f"{PROJECT_NAME}/kitti_PIXOR_matssteinweg"
-)
+if DATASET == "kitti":
+    DATASET_DIR = os.path.join(
+        os.getenv("PHD_DATASETS"), f"{PROJECT_NAME}/kitti_PIXOR_matssteinweg"
+    )
+elif DATASET == "nuscenes_mini":
+    DATASET_DIR = os.path.join(
+        os.getenv("PHD_DATASETS"), f"{PROJECT_NAME}/nuscenes_mini_kitti_format"
+    )
+elif DATASET == "nuscenes":
+    DATASET_DIR = os.path.join(
+        os.getenv("PHD_DATASETS"), f"{PROJECT_NAME}/nuscenes_mini_kitti_format"
+    )
 RESULTS_DIR = os.path.join(
     os.getenv("PHD_RESULTS"), f"{PROJECT_NAME}/PIXOR_matssteinweg/{EXPERIMENT_NAME}"
 )

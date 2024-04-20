@@ -12,7 +12,7 @@ sys.path.append(os.getenv("THREEDOBJECTDETECTION_ROOT"))
 import PIXOR_matssteinweg.config.config as config
 
 
-def plot_history(metrics, n_epochs_trained, save=True):
+def plot_history(metrics, n_epochs_trained, save=True, show=False):
     """
     Plot evoluction of training and validation loss over the training period.
     :param metrics: dictionary containing training and validation loss
@@ -66,16 +66,16 @@ def plot_history(metrics, n_epochs_trained, save=True):
             dpi=300,
             bbox_inches="tight",
         )
-    plt.show()
+    if show:
+        plt.show()
 
 
 def main():
-    n_epochs_trained = 2
     metrics = np.load(
-        os.path.join(config.RESULTS_DIR, f"metrics/metrics_{n_epochs_trained}.npz"),
+        os.path.join(config.RESULTS_DIR, f"metrics/metrics_{config.N_EPOCHS_TRAINED}.npz"),
         allow_pickle=True,
     )["history"].item()
-    plot_history(metrics, n_epochs_trained, save=True)
+    plot_history(metrics, config.N_EPOCHS_TRAINED, save=True, show=False)
 
 
 if __name__ == "__main__":

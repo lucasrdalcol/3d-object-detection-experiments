@@ -157,6 +157,7 @@ class PointCloudDataset(Dataset):
     def __init__(
         self,
         root_dir,
+        dataset="kitti",
         split="training",
         device=torch.device("cpu"),
         show_times=True,
@@ -178,10 +179,19 @@ class PointCloudDataset(Dataset):
         self.split = split
         self.split_dir = os.path.join(root_dir, split)
 
-        if split == "training":
+        # Kitti has 6481 training and 1000 testing samples. NuScenes mini has 323 training and 81 testing samples.
+        if dataset == "kitti" and split == "training":
             self.num_samples = 6481
-        elif split == "testing":
+        elif dataset == "kitti" and split == "testing":
             self.num_samples = 1000
+        elif dataset == "nuscenes_mini" and split == "training":
+            self.num_samples = 323
+        elif dataset == "nuscenes_mini" and split == "testing":
+            self.num_samples = 81
+        elif dataset == "nuscenes" and split == "training":
+            self.num_samples = 323
+        elif dataset == "nuscenes" and split == "testing":
+            self.num_samples = 81
         else:
             print("Unknown split: %s" % split)
             exit(-1)
@@ -192,19 +202,22 @@ class PointCloudDataset(Dataset):
         self.label_dir = os.path.join(self.split_dir, "label_2")
         self.image_dir = os.path.join(self.split_dir, "image_2")
 
+        # Get all files in the directories in order according to the number of samples
+        self.lidar_files = sorted(os.listdir(self.lidar_dir))[:self.num_samples]
+        self.calib_files = sorted(os.listdir(self.calib_dir))[:self.num_samples]
+        self.label_files = sorted(os.listdir(self.label_dir))[:self.num_samples]
+        self.image_files = sorted(os.listdir(self.image_dir))[:self.num_samples]
+
     def __len__(self):
         # Denotes the total number of samples
         return self.num_samples
 
     def __getitem__(self, index):
-        if self.split == "testing":
-            index += 6481
-
         # start time
         get_item_start_time = time.time()
 
         # get point cloud
-        lidar_filename = os.path.join(self.lidar_dir, "%06d.bin" % index)
+        lidar_filename = os.path.join(self.lidar_dir, self.lidar_files[index])
         lidar_data = kitti_utils.load_velo_scan(lidar_filename)
 
         # time for loading point cloud
@@ -227,18 +240,18 @@ class PointCloudDataset(Dataset):
 
         # get image
         if self.get_image:
-            image_filename = os.path.join(self.image_dir, "%06d.png" % index)
+            image_filename = os.path.join(self.image_dir, self.image_files[index])
             image = kitti_utils.get_image(image_filename)
 
         # get current time
         read_labels_start_time = time.time()
 
         # get calibration
-        calib_filename = os.path.join(self.calib_dir, "%06d.txt" % index)
+        calib_filename = os.path.join(self.calib_dir, self.calib_files[index])
         calib = kitti_utils.Calibration(calib_filename)
 
         # get labels
-        label_filename = os.path.join(self.label_dir, "%06d.txt" % index)
+        label_filename = os.path.join(self.label_dir, self.label_files[index])
         labels = kitti_utils.read_label(label_filename)
 
         read_labels_end_time = time.time()
@@ -259,7 +272,7 @@ class PointCloudDataset(Dataset):
 
             # iterate over all 3D label objects in list
             for label in labels:
-                if label.type == "Car":
+                if label.type == "Car" or label.type == "car":
                     # compute corners of 3D bounding box in camera coordinates
                     _, bbox_corners_camera_coord = kitti_utils.compute_box_3d(
                         label, calib.P, scale=1.0
@@ -343,7 +356,7 @@ def load_dataset(
 
         # create customized dataset class
         dataset = PointCloudDataset(
-            root_dir=root, device=device, split="training", show_times=show_times
+            root_dir=root, device=device, dataset=config.DATASET, split="training", show_times=show_times
         )
 
         # number of images used for training and validation
@@ -375,7 +388,7 @@ def load_dataset(
     # create test set
     else:
 
-        test_dataset = PointCloudDataset(root_dir=root, device=device, split="testing")
+        test_dataset = PointCloudDataset(root_dir=root, device=device, dataset=config.DATASET, split="testing")
         data_loader = DataLoader(
             test_dataset,
             batch_size=batch_size,

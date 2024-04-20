@@ -77,7 +77,7 @@ def main():
     device = torch.device(config.DEVICE if torch.cuda.is_available() else "cpu")
 
     # create dataset
-    dataset = PointCloudDataset(config.DATASET_DIR, split="testing", get_image=True)
+    dataset = PointCloudDataset(config.DATASET_DIR, dataset=config.DATASET, split="testing", get_image=True)
 
     # select index from dataset
     ids = np.arange(0, dataset.__len__())
@@ -89,10 +89,9 @@ def main():
 
         # create model
         pixor = PIXOR()
-        n_epochs_trained = 1
         pixor.load_state_dict(
             torch.load(
-                os.path.join(config.MODELS_DIR, f"PIXOR_Epoch_{n_epochs_trained}.pt"),
+                os.path.join(config.MODELS_DIR, f"PIXOR_Epoch_{config.N_EPOCHS_TRAINED}.pt"),
                 map_location=device,
             )
         )
@@ -127,8 +126,8 @@ def main():
 
         # display ground truth bounding boxes on BEV image and camera image
         for label in labels:
-            # only consider annotations for class "Car"
-            if label.type == "Car":
+            # only consider annotations for class "Car" or "car"
+            if label.type == "Car" or label.type == "car":
                 # compute corners of the bounding box
                 bbox_corners_image_coord, bbox_corners_camera_coord = (
                     kitti_utils.compute_box_3d(label, calib.P)
